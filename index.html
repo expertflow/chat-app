@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test App</title>
+    <script type="text/javascript">
+      var __cim = __cim || {};
+      __cim.initWidgetUrl = "http://127.0.0.1:5500/widget/"; //The IP or FQDN of server where web widget is hosted
+      __cim.customerWidgetUrl = "http://localhost:4200"; //The IP or FQDN of server where Customer Widget is hosted
+      __cim.widgetIdentifier = "Web"; //Add web identifier for CIM
+      __cim.serviceIdentifier = "1111"; //Add Service identifier for CIM
+
+      (function () {
+        var __cimScript = document.createElement("script"),
+          __cimScriptTag = document.getElementsByTagName("script")[0];
+        __cimScript.src = __cim.initWidgetUrl + "/init_widget.js";
+        __cimScript.charset = "UTF-8";
+        __cimScriptTag.parentNode.insertBefore(__cimScript, __cimScriptTag);
+      })();
+    </script>
+  </head>
+  <body>
+  <h2>Test CIM Tags</h2>
+  </body>
+</html>

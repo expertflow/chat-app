@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Test App</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script src="jquery.min.js"></script>
+    <link href="style.css" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="http://127.0.0.1:5501/index.js"></script>
+    <style>
+        .content {
+            font-family: Arial;
+            text-align: center;
+            max-width: 70%;
+            margin: 30px auto;
+        }
+
+        .content h2 {
+            font-size: 4em;
+        }
+
+        .content p {
+            font-size: 17px;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<!--------------------------->
+<!-- /Addition Panel HTML/ -->
+<!--------------------------->
+
+<div id="welcomeWrapper">
+    <div class="welcome-header ef-widget-color">
+        <button class="close-wrapper"  onclick="closeWrapper()"><img src="images/add.svg" alt="close"> </button>
+        <strong id="panelTitle"></strong>
+        <p id="panelSubTitle"></p>
+    </div>
+    <div class="welcome-content">
+        <p id="panelDesc"></p>
+        <button class=" ef-widget-color" id="panelBtn" onclick="triggerSelection('chat') ; triggerCall('chat')"></button>
+    </div>
+</div>    
+
+<!---------------------->
+<!-- /Chat Bar HTML/ -->
+<!---------------------->
+
+<div class="ef-widget-is-loading ef-widget-dropdown ef-widget-bar-view" id="dropdownTrigger">
+    <div id="myDropdown" class="ef-widget-bar-content">
+           <button id="chatIconBtn" title="Live Chat" class="ef-widget-bar-trigger ef-widget-chat-trigger ef-widget-color"
+                onclick="triggerSelection('chat') ; triggerCall('chat')">
+               <span id="chatText">Live Chat</span>
+           </button>
+    </div>
+</div>
+
+<!--------------------->
+<!-- /Chat Icon HTML/ -->
+<!--------------------->
+
+<!-- <div class="ef-widget-dropdown ef-widget-is-loading " id="dropdownTrigger">
+   <div id="myDropdown" class="ef-widget-dropdown-content">
+       <button id="chatIconBtn" title="Live Chat" class="ef-widget-inner-trigger ef-widget-chat-trigger ef-widget-option-trigger ef-widget-color"
+               onclick="triggerSelection('chat') ; triggerCall('chat')">
+           <span id="chatText">Live Chat</span>
+       </button>
+   </div>
+</div> -->
+
+<!--form-->
+<div class="ef-widget-chat-form-area ef-widget-show" id="chatFormMain">
+    <div class="ef-widget-chat-form">
+        <div class="ef-widget-form-header ef-widget-color" onclick="chatFormAction()">
+            <h5 id="headerHeading">Let's Chat</h5>
+            <span class="ef-widget-header-icon" ><img src="./images/remove.svg" alt="minimize"> </span>
+        </div>
+        <div class="ef-widget-form-area">
+            <form onsubmit='return onSubmit(this)' name="chatForm">
+                <div class="ef-widget-chat-form-content">
+                    <div class="ef-widget-form-group" id="firstNameField">
+                        <label><span id="firstN_l">First Name</span>:<span class="ef-widget-required"></span></label>
+                        <input type="text" name="firstName" class="ef-widget-form-control" id="firstName">
+                    </div>
+                    <div class="ef-widget-clearfix"></div>
+                    <div class="ef-widget-form-group" id="lastNameField">
+                        <label><span  id="lastN_l">Last Name</span>:</label>
+                        <input type="text" name="lastName" class="ef-widget-form-control" id="lastName">
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="ef-widget-form-group" id="emailField">
+                        <label><span id="email_l">Email</span>:</label>
+                        <input type="email" name="email" class="ef-widget-form-control" id="email">
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="ef-widget-form-group" id="channelField">
+                        <label><span id="channelIdentifier_l">Customer Channel Identifier</span>:<span class="ef-widget-required">*</span></label>
+                        <input type="text" name="channelIdentifier1" class="ef-widget-form-control" id="channelIdentifier">                    
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+                <input id="formTrigger" type="submit" class="ef-widget-btn ef-widget-form-trigger ef-widget-color" value="Start Chat">
+
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+<script src="main.js"></script>
+  
+</html>
