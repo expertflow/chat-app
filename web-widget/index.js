@@ -1,14 +1,14 @@
 const params = new URLSearchParams(window.location.search);
 
-let widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
-let service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
-let channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
+widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
+service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
+channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
 let source = '';
 let socketId;
 let conversationId;
 let state = false;
+let isConnected = false;
 let chatPayLoad;
-var messages = [];
 let fileLoading = false;
 let imageUrl = [];
 let selectedFile = "";
@@ -59,6 +59,10 @@ fileNode.addEventListener('change', (event) => {
     }
 });
 
+function displayChat() {
+    displayMessages();
+}
+
 function toggleState() {
     this.state = !this.state;
     let chatBox = document.querySelector('.chatbox__support');
@@ -98,14 +102,16 @@ function onSubmit(form) {
         let formData = $(form).serializeArray();
         console.log('Form Data:', formData);
         let eventPayload = getEventPayload(formData);
+        setUserData(eventPayload);
         if (channel_customer_identifier && service_identifier) {
-            this.chatPayLoad = { type: "CHAT_REQUESTED", data: eventPayload };
-            establish_connection(this.chatPayLoad, socketEventListeners);
+            establish_connection(service_identifier, channel_customer_identifier);
             if (socketId != '' || socketId != undefined) {
+                this.isConnected = true;
                 formReset();
                 changeScreen('chat');
-                if (this.chatStarted == true) {
-                    displayMessages();
+                if (this.isConnected == true) {
+                    this.chatPayLoad = { type: "CHAT_REQUESTED", data: eventPayload };
+                    chatRequest(this.chatPayLoad);
                 }
             }
             return false;
@@ -194,27 +200,6 @@ function uploadFile(files, additionalText) {
                     fd.append("file", files[i]);
                     fd.append("conversationId", `${Math.floor(Math.random() * 90000) + 10000}`);
                     console.log("ready to Upload File", fileSize, fileMimeType);
-                    // this.httpService.uploadToFileEngine(fd).subscribe(
-                    //     (e) => {
-                    //         this.constructCimMessage(
-                    //             e.type.split("/")[0],
-                    //             "",
-                    //             null,
-                    //             null,
-                    //             e.type,
-                    //             e.name,
-                    //             e.size,
-                    //             additionalText,
-                    //             e.name.split(".").pop()
-                    //         );
-                    //         console.log("files upload ee", e);
-                    //     },
-                    //     (error) => {
-                    //         console.log('Error: ', error);
-                    //         this.imageUrl = [];
-                    //         this.selectedFile = "";
-                    //     }
-                    // );
                 } else {
                     console.log(files[i].name + " File size should be less than 5MB");
                     this.imageUrl = [];
@@ -237,59 +222,8 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
         header.intent = intent ? intent : null;
         body.type = "PLAIN";
         body.markdownText = text.trim();
-    }
-    //  else if (msgType.toLowerCase() == "application" || msgType.toLowerCase() == "text") {
-    //   body.type = "FILE";
-    //   body.markdownText = additionalText;
-    //   body["caption"] = "";
-    //   body["additionalDetails"] = { fileName: fileName };
-    //   body["attachment"] = {
-    //     mediaUrl: this.config.FileServerUrl + "/api/downloadFileStream?filename=" + fileName,
-    //     type: fileMimeType,
-    //     size: fileSize,
-    //     extType: fileType,
-    //     mimeType: fileMimeType
-    //   };
-    // } else if (msgType.toLowerCase() == "image") {
-    //   body.type = "IMAGE";
-    //   body.markdownText = additionalText;
-    //   body["caption"] = fileName;
-    //   body["additionalDetails"] = {};
-    //   body["attachment"] = {
-    //     mediaUrl: this.config.FileServerUrl + "/api/downloadFileStream?filename=" + fileName,
-    //     type: fileMimeType,
-    //     size: fileSize,
-    //     thumbnail: ""
-    //   };
-    //   console.log(this.config.FileServerUrl);
-    // } else if (msgType.toLowerCase() == "video") {
-    //   body.type = "VIDEO";
-    //   body.markdownText = additionalText;
-    //   body["caption"] = fileName;
-    //   body["additionalDetails"] = {};
-    //   body["attachment"] = {
-    //     mediaUrl: this.config.FileServerUrl + "/api/downloadFileStream?filename=" + fileName,
-    //     type: fileMimeType,
-    //     size: fileSize,
-    //     thumbnail: ""
-    //   };
-    //   console.log(this.config.FileServerUrl);
-    // } else if (msgType.toLowerCase() == "audio") {
-    //   body.type = "AUDIO";
-    //   body.markdownText = additionalText;
-    //   body["caption"] = fileName;
-    //   body["additionalDetails"] = {};
-    //   body["attachment"] = {
-    //     mediaUrl: this.config.FileServerUrl + "/api/downloadFileStream?filename=" + fileName,
-    //     type: fileMimeType,
-    //     size: fileSize,
-    //     thumbnail: ""
-    //   };
-    //   console.log(this.config.FileServerUrl);
-    // }
-    else {
+    } else {
         console.log('Unable to process the file');
-        //   this.snackBar.open("unable to process the file", "err");
         return;
     }
     let msgPayload = {
@@ -299,6 +233,7 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
         customer: this.chatPayLoad.data
     }
     sendMessage(msgPayload);
+    displayMessages();
     clearMessageComposer();
     this.fileLoading = false;
     this.imageUrl = [];
@@ -318,11 +253,28 @@ function clearMessageComposer() {
 function displayMessages() {
     let msg = '';
     this.messages.slice().reverse().forEach((message, index) => {
+        if (message.body.type === 'DELIVERYNOTIFICATION') {
+            return false;
+        }
         if (message.header.sender.type === 'BOT') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--operator">${message.body.markdownText}</div>`
             }
-        } else if (message.header.sender.type === 'AGENT') {
+            if (message.body.type === 'BUTTON') {
+
+                msg += `<div class="chat-message agent-message bot-message">
+                    <div class="chat-message-content structured-message">
+                    <p><b>${message.body.additionalDetails.interactive.header.text}</b>
+                    <span>${message.body.additionalDetails.interactive.body.text}</span></p>`;
+                msg += `<ul class="structured-actions">`;
+                for (const btn in message.body.buttons) {
+                    const button = message.body.buttons[btn];
+                    msg += `<li class="">${button.title}</li>`;
+                }
+                msg += `</ul></div></div>`;
+            }
+        }
+        if (message.header.sender.type === 'AGENT') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--operator">${message.body.markdownText}</div>`
             } else if (message.body.type === 'NOTIFICATION') {
@@ -332,7 +284,8 @@ function displayMessages() {
                     msg += `<div class="messages__item messages__item--notification">Agent left the conversation</div>`
                 }
             }
-        } else if (message.header.sender.type === 'CUSTOMER') {
+        }
+        if (message.header.sender.type === 'CUSTOMER') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--visitor">${message.body.markdownText}</div>`
             }
@@ -349,6 +302,7 @@ function endChat() {
     if (proceed) {
         chatEnd(this.chatPayLoad.data);
         if (this.isChatClose == false) {
+            this.isConnected = false;
             changeScreen('form');
         }
     } else { return false; }

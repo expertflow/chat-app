@@ -15,6 +15,8 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
         integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
         crossorigin="anonymous"></script>
+    <!-- Configuration file -->
+    <script src="config.js"></script>
     <!-- SDK CDN File -->
     <script src="http://localhost:5501/sdk.js"></script>
 
@@ -80,9 +82,10 @@
                         <label for="file-upload"><i class="fa fa-paperclip footer__button"
                                 aria-hidden="true"></i></label>
                         <input accept=".rtf,.txt,.png,.jpg,.jpeg,.pdf,.ppt,.xlsx,.xls,.doc,.docx,.mp4,.mp3,.mpga,.webp"
-                            id="file-upload" type="file" name="file-upload"/>
+                            id="file-upload" type="file" name="file-upload" />
                     </div>
-                    <i class="fa fa-microphone footer__button" id="voice-btn" onclick="onSendVoice()" aria-hidden="true"></i>
+                    <i class="fa fa-microphone footer__button" id="voice-btn" onclick="onSendVoice()"
+                        aria-hidden="true"></i>
                 </div>
             </div>
             <div class="chatbox__button" onclick="toggleState()">
