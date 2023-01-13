@@ -26,13 +26,13 @@
     <div class="container">
         <div class="chatbox">
             <div class="chatbox__support">
-                <div class="chatbox__header">
+                <div class="chatbox__header" id="chatbox__header">
                     <div class="chatbox__image--header">
                         <img class="logo" src="images/chat_logo.jpg" alt="image">
                     </div>
                     <div class="chatbox__content--header">
-                        <h4 class="chatbox__heading--header">EXPERTFLOW CHATBOT</h4>
-                        <p class="chatbox__description--header">LET'S CHAT</p>
+                        <h4 class="chatbox__heading--header" id="title">EXPERTFLOW CHATBOT</h4>
+                        <p class="chatbox__description--header" id="subTitle">LET'S CHAT</p>
                     </div>
                     <div class="widget__option">
                         <span class="chatbox__minus" onclick="toggleState()"> <i class="fa fa-minus"
@@ -79,7 +79,7 @@
                             aria-hidden="true"></i></button>
 
                     <div id="file-btn">
-                        <label for="file-upload"><i class="fa fa-paperclip footer__button"
+                        <label for="file-upload" ><i class="fa fa-paperclip footer__button"
                                 aria-hidden="true"></i></label>
                         <input accept=".rtf,.txt,.png,.jpg,.jpeg,.pdf,.ppt,.xlsx,.xls,.doc,.docx,.mp4,.mp3,.mpga,.webp"
                             id="file-upload" type="file" name="file-upload" />
@@ -89,7 +89,7 @@
                 </div>
             </div>
             <div class="chatbox__button" onclick="toggleState()">
-                <button>
+                <button id="chatbox__button">
                     <i class="chatbox__icon fa fa-comments fa-3x" aria-hidden="true"></i>
                 </button>
             </div>

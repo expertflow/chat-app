@@ -9,6 +9,7 @@ let conversationId;
 let state = false;
 let isConnected = false;
 let chatPayLoad;
+let customerData;
 let fileLoading = false;
 let imageUrl = [];
 let selectedFile = "";
@@ -23,6 +24,37 @@ recognition.interimResults = false;
 recognition.maxAlternatives = 1;
 
 const synth = window.speechSynthesis;
+
+window.onload = () => {
+    console.log("window loaded");
+    widgetConfigs(ccm_url, widget_identifier, (data) => {
+        console.log('Console Data:', data);
+        // Widget Config Variables
+        let title = document.getElementById('title'); //Expertflow Chat
+        let subTitle = document.getElementById('title'); //let's chat
+        let chatHeader = document.getElementById('chatbox__header'); //#ffffff
+        let chatIcon = document.getElementById('chatbox__button');
+        // let customerReconnectTime = document.getElementById('title'); //0
+        // let enableDownloadTranscript =  document.getElementById('title'); //false
+        // let enableDynamicLink =  document.getElementById('title'); //false
+        // let enableEmoji =  document.getElementById('title'); //false
+        let enableFileTransfer = document.getElementById('file-btn');  //false
+        // let enableFontResize =  document.getElementById('title'); //false
+        // let language =  document.getElementById('title'); // en
+
+        title.innerHTML = data.title;
+        subTitle.innerHTML = data.subTitle;
+        chatHeader.style.backgroundColor = data.theme;
+        chatIcon.style.backgroundColor = data.theme;
+        // customerReconnectTime = data.customerReconnectTime;
+        // enableDownloadTranscript.setAttribute("hidden", data.enableDownloadTranscript);
+        // enableDynamicLink.setAttribute("hidden", data.enableDynamicLink);
+        // enableEmoji.setAttribute("hidden", data.enableEmoji);
+        enableFileTransfer.setAttribute("hidden", data.enableFileTransfer);
+        // enableFontResize.setAttribute("hidden", data.enableFontResize);
+        // language.innerHTML = data.language.code.trim();
+    });
+};
 
 const textNode = document.getElementById('textBox');
 textNode.addEventListener('keyup', ({ key }) => {
@@ -96,41 +128,6 @@ function formReset() {
     const form = document.getElementById('chatForm');
     form.reset();
 }
-
-function onSubmit(form) {
-    try {
-        let formData = $(form).serializeArray();
-        console.log('Form Data:', formData);
-        let eventPayload = getEventPayload(formData);
-        setUserData(eventPayload);
-        if (channel_customer_identifier && service_identifier) {
-            establish_connection(service_identifier, channel_customer_identifier);
-            if (socketId != '' || socketId != undefined) {
-                this.isConnected = true;
-                formReset();
-                changeScreen('chat');
-                if (this.isConnected == true) {
-                    this.chatPayLoad = { type: "CHAT_REQUESTED", data: eventPayload };
-                    chatRequest(this.chatPayLoad);
-                }
-            }
-            return false;
-        } else {
-            if (!channel_customer_identifier) {
-                alert('Channel Customer Identifier is Missing! Please fill the required field.');
-                document.getElementById("channelIdentifier").required = true;
-            } else if (!service_identifier) {
-                alert('Service identifier is Missing! Please fill the required field.');
-            }
-            return false;
-        }
-    } catch (error) {
-        console.log("error", error);
-        alert('something gets wrong please check console logs for details');
-        return false;
-    }
-}
-
 function getEventPayload(preChatFormData) {
     if (document.getElementById('channelIdentifier') && document.getElementById('channelIdentifier').value != '') {
         channel_customer_identifier = document.getElementById('channelIdentifier').value;
@@ -153,7 +150,6 @@ function getEventPayload(preChatFormData) {
         formData: getFormDataByPreChatForm(preChatFormData)
     }
 }
-
 function getFormDataByPreChatForm(preChatFormData) {
     for (i = 0; i < preChatFormData.length; i++) {
         preChatFormData[i]['key'] = preChatFormData[i].name;
@@ -162,6 +158,65 @@ function getFormDataByPreChatForm(preChatFormData) {
     }
     return { id: Math.random(), formId: Math.random(), filledBy: 'web-init', attributes: preChatFormData, createdOn: new Date() }
 }
+function onSubmit(form) {
+    try {
+        let formData = $(form).serializeArray();
+        console.log('Form Data:', formData);
+        if (channel_customer_identifier && service_identifier) {
+            let eventPayload = getEventPayload(formData);
+            setUserData(eventPayload);
+            return false;
+        } else {
+            if (!channel_customer_identifier) {
+                alert('Channel Customer Identifier is Missing! Please fill the required field.');
+                document.getElementById("channelIdentifier").required = true;
+            } else if (!service_identifier) {
+                alert('Service identifier is Missing! Please fill the required field.');
+            }
+            return false;
+        }
+    } catch (error) {
+        console.log("error", error);
+        alert('something gets wrong please check console logs for details');
+        return false;
+    }
+}
+function setUserData(data) {
+    customerData = data;
+    if (
+        customerData.channelCustomerIdentifier == '' ||
+        customerData.serviceIdentifier == '' ||
+        customerData.browserDeviceInfo.deviceType == ''
+    ) {
+        return {
+            type: 'ERROR',
+            data: {
+                code: 400,
+                description: 'BAD REQUEST',
+                message: 'Mandatory attributes are missing'
+            }
+        }
+    } else {
+        let user = { data: customerData };
+        localStorage.setItem('user', JSON.stringify(user));
+        if (localStorage.getItem('user')) {
+            establish_connection(service_identifier, channel_customer_identifier, (res) => {
+                if (res.id !== undefined || res.id !== '' || res.id !== null) {
+                    console.log('socket connected: ', res);
+                    this.isConnected = true;
+                    formReset();
+                    changeScreen('chat');
+                    this.chatPayLoad = { type: "CHAT_REQUESTED", data: customerData };
+                    chatRequest(this.chatPayLoad);
+                }else {
+                    console.log('Error Response: ',error);
+                }
+            });
+        }
+
+    }
+}
+
 
 function onSendButton() {
     let textField = document.getElementById('textBox')
@@ -172,7 +227,6 @@ function onSendButton() {
         textField.value = '';
     }
 }
-
 function onSendVoice() {
     recognition.start();
     recognition.onresult = (e) => {
@@ -185,7 +239,6 @@ function onSendVoice() {
         }
     }
 }
-
 function uploadFile(files, additionalText) {
     let availableExtentions = ["txt", "png", "jpg", "jpeg", "pdf", "ppt", "pptx", "xlsx", "xls", "doc", "docx", "rtf", "mp3", "mp4", "webp"];
     let ln = files.length;
@@ -213,7 +266,6 @@ function uploadFile(files, additionalText) {
         }
     }
 }
-
 function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeType, fileName, fileSize, additionalText, fileType) {
     let header = { replyToMessageId: null, intent: null };
     let body = { markdownText: "", type: "" };
@@ -239,17 +291,14 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
     this.imageUrl = [];
     this.selectedFile = "";
 }
-
 function scrollToBottom() {
     var msgDiv = document.getElementById("chatbox__messages");
     window.scrollTo(0, msgDiv.innerHeight);
 }
-
 function clearMessageComposer() {
     this.input_disabled = false;
     this.text = "";
 }
-
 function displayMessages() {
     let msg = '';
     this.messages.slice().reverse().forEach((message, index) => {
@@ -296,7 +345,6 @@ function displayMessages() {
     console.log('msg:', msg);
     scrollToBottom();
 }
-
 function endChat() {
     let proceed = confirm("Are you sure to end the conversation?");
     if (proceed) {
