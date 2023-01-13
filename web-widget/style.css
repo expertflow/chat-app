@@ -90,20 +90,25 @@ html {
     outline: none;
     cursor: pointer;
 }
+
 .send__button {
     position: relative;
     margin-left: -40px;
     color: var(--primary);
 }
+
 #file-btn {
     padding-left: 12px;
 }
+
 #file-btn>label {
     margin-bottom: 0 !important;
 }
+
 #file-btn>input {
     display: none;
 }
+
 ::-webkit-input-placeholder {
     /* Edge */
     color: var(--primary);
@@ -246,7 +251,7 @@ html {
     width: 90%;
     border: none;
     padding: 10px 20px;
-    border-radius: 30px; 
+    border-radius: 30px;
     text-align: left;
     height: calc(2em + 0.5rem + 2px);
 }

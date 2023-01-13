@@ -4,7 +4,6 @@ widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
 service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
 channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
 let source = '';
-let socketId;
 let conversationId;
 let state = false;
 let isConnected = false;
@@ -15,6 +14,7 @@ let imageUrl = [];
 let selectedFile = "";
 let input_disabled = false;
 let isChatClose = true;
+var messages = [];
 
 // Web Speech Api Setup
 const recognition = new webkitSpeechRecognition();
@@ -91,10 +91,6 @@ fileNode.addEventListener('change', (event) => {
     }
 });
 
-function displayChat() {
-    displayMessages();
-}
-
 function toggleState() {
     this.state = !this.state;
     let chatBox = document.querySelector('.chatbox__support');
@@ -128,6 +124,7 @@ function formReset() {
     const form = document.getElementById('chatForm');
     form.reset();
 }
+
 function getEventPayload(preChatFormData) {
     if (document.getElementById('channelIdentifier') && document.getElementById('channelIdentifier').value != '') {
         channel_customer_identifier = document.getElementById('channelIdentifier').value;
@@ -150,6 +147,7 @@ function getEventPayload(preChatFormData) {
         formData: getFormDataByPreChatForm(preChatFormData)
     }
 }
+
 function getFormDataByPreChatForm(preChatFormData) {
     for (i = 0; i < preChatFormData.length; i++) {
         preChatFormData[i]['key'] = preChatFormData[i].name;
@@ -158,6 +156,7 @@ function getFormDataByPreChatForm(preChatFormData) {
     }
     return { id: Math.random(), formId: Math.random(), filledBy: 'web-init', attributes: preChatFormData, createdOn: new Date() }
 }
+
 function onSubmit(form) {
     try {
         let formData = $(form).serializeArray();
@@ -181,6 +180,7 @@ function onSubmit(form) {
         return false;
     }
 }
+
 function setUserData(data) {
     customerData = data;
     if (
@@ -201,22 +201,74 @@ function setUserData(data) {
         localStorage.setItem('user', JSON.stringify(user));
         if (localStorage.getItem('user')) {
             establish_connection(service_identifier, channel_customer_identifier, (res) => {
-                if (res.id !== undefined || res.id !== '' || res.id !== null) {
-                    console.log('socket connected: ', res);
-                    this.isConnected = true;
-                    formReset();
-                    changeScreen('chat');
-                    this.chatPayLoad = { type: "CHAT_REQUESTED", data: customerData };
-                    chatRequest(this.chatPayLoad);
-                }else {
-                    console.log('Error Response: ',error);
+                try {
+                    if (res.id !== undefined || res.id !== '' || res.id !== null) {
+                        switch (res.type) {
+                            case 'SOCKET_CONNECTED':
+                                this.isConnected = true;
+                                formReset();
+                                changeScreen('chat');
+                                this.chatPayLoad = { type: "CHAT_REQUESTED", data: customerData };
+                                chatRequest(this.chatPayLoad);
+                                break;
+                            case 'CHANNEL_SESSION_STARTED':
+                                this.conversationId = res.data.header.channelSession.conversationId;
+                                localStorage.setItem('conversationId', res.data.header.channelSession.conversationId);
+                                break;
+                            case 'MESSAGE_RECEIVED':
+                                this.messages.push(res.data);
+                                pushNotification(res.data);
+                                displayMessage();
+                                break;
+                            case 'SOCKET_DISCONNECTED':
+                                if (res.data == 'io server disconnect' || res.data == 'server namespace disconnect') {
+                                    console.log(`io server disconnect with reason: `, res.data);
+                                    this.chatStarted = false;
+                                    this.isConnected = false;
+                                    this.isChatClose = true;
+                                    this.message = [];
+                                    changeScreen('form');
+                                    localStorage.removeItem('user');
+                                }
+                                break;
+                            case 'CONNECT_ERROR':
+                                console.log(`unable to establish connection with the server: `, res.data);
+                                localStorage.setItem('error', '1');
+                                break;
+                            case 'CHAT_ENDED':
+                                this.chatStarted = false;
+                                this.isConnected = false;
+                                this.isChatClose = true;
+                                this.message = [];
+                                changeScreen('form');
+                                console.log('chat end: ', data);
+                                break;
+                            case 'ERRORS':
+                                if (res.data.task.toUpperCase() == 'CHAT_REQUESTED') {
+                                    if (res.data.code == 408) {
+                                        alert('Unable to connect with end server');
+                                    } else if (res.data.code == 400) {
+                                        alert('data is invalid');
+                                    } else if (res.data.code == 500) {
+                                        alert('Internal error with end server');
+                                    } else {
+                                        alert('Unable to send request');
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error on establishing connection: ', error)
                 }
+                console.log('Callback Function Response: ', res);
             });
         }
 
     }
 }
-
 
 function onSendButton() {
     let textField = document.getElementById('textBox')
@@ -227,6 +279,7 @@ function onSendButton() {
         textField.value = '';
     }
 }
+
 function onSendVoice() {
     recognition.start();
     recognition.onresult = (e) => {
@@ -239,6 +292,7 @@ function onSendVoice() {
         }
     }
 }
+
 function uploadFile(files, additionalText) {
     let availableExtentions = ["txt", "png", "jpg", "jpeg", "pdf", "ppt", "pptx", "xlsx", "xls", "doc", "docx", "rtf", "mp3", "mp4", "webp"];
     let ln = files.length;
@@ -266,6 +320,7 @@ function uploadFile(files, additionalText) {
         }
     }
 }
+
 function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeType, fileName, fileSize, additionalText, fileType) {
     let header = { replyToMessageId: null, intent: null };
     let body = { markdownText: "", type: "" };
@@ -285,21 +340,23 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
         customer: this.chatPayLoad.data
     }
     sendMessage(msgPayload);
-    displayMessages();
     clearMessageComposer();
     this.fileLoading = false;
     this.imageUrl = [];
     this.selectedFile = "";
 }
+
 function scrollToBottom() {
     var msgDiv = document.getElementById("chatbox__messages");
     window.scrollTo(0, msgDiv.innerHeight);
 }
+
 function clearMessageComposer() {
     this.input_disabled = false;
     this.text = "";
 }
-function displayMessages() {
+
+function displayMessage() {
     let msg = '';
     this.messages.slice().reverse().forEach((message, index) => {
         if (message.body.type === 'DELIVERYNOTIFICATION') {
@@ -345,13 +402,55 @@ function displayMessages() {
     console.log('msg:', msg);
     scrollToBottom();
 }
+
 function endChat() {
     let proceed = confirm("Are you sure to end the conversation?");
     if (proceed) {
         chatEnd(this.chatPayLoad.data);
-        if (this.isChatClose == false) {
-            this.isConnected = false;
-            changeScreen('form');
-        }
     } else { return false; }
+}
+
+function pushNotification(msg) {
+    if (msg.body.type.toLowerCase() !== 'notification' && msg.body.type.toLowerCase() !== 'deliverynotification') {
+        const messageType = msg.header.sender.type;
+        const messageText = msg.body.markdownText;
+        const textType = msg.body.type;
+        if (messageType == 'BOT' || messageType == 'AGENT') {
+            if (textType == 'PLAIN' && document.hidden) {
+                openBrowserNotification(messageType, messageText);
+            }
+        }
+    }
+}
+
+function openBrowserNotification(head, message) {
+    if (!Notification) {
+        console.log("Browser does not support notifications.");
+    } else {
+        // check if permission is already granted
+        if (Notification.permission === "granted") {
+            // show notification here
+            var notify = new Notification(head, {
+                icon: "",
+                body: message
+            });
+        } else {
+            // request permission from user
+            Notification.requestPermission()
+                .then(function (p) {
+                    if (p === "granted") {
+                        // show notification here
+                        var notify = new Notification(head, {
+                            icon: "",
+                            body: message
+                        });
+                    } else {
+                        console.log("User blocked notifications.");
+                    }
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
+        }
+    }
 }
