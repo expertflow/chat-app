@@ -3,18 +3,13 @@ const params = new URLSearchParams(window.location.search);
 widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
 service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
 channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
+var messages = [];
 let source = '';
 let conversationId;
 let state = false;
-let isConnected = false;
 let chatPayLoad;
 let customerData;
-let fileLoading = false;
-let imageUrl = [];
-let selectedFile = "";
 let input_disabled = false;
-let isChatClose = true;
-var messages = [];
 
 // Web Speech Api Setup
 const recognition = new webkitSpeechRecognition();
@@ -27,34 +22,24 @@ const synth = window.speechSynthesis;
 
 window.onload = () => {
     console.log("window loaded");
-    widgetConfigs(ccm_url, widget_identifier, (data) => {
-        console.log('Console Data:', data);
-        // Widget Config Variables
-        let title = document.getElementById('title'); //Expertflow Chat
-        let subTitle = document.getElementById('title'); //let's chat
-        let chatHeader = document.getElementById('chatbox__header'); //#ffffff
-        let chatIcon = document.getElementById('chatbox__button');
-        // let customerReconnectTime = document.getElementById('title'); //0
-        // let enableDownloadTranscript =  document.getElementById('title'); //false
-        // let enableDynamicLink =  document.getElementById('title'); //false
-        // let enableEmoji =  document.getElementById('title'); //false
-        let enableFileTransfer = document.getElementById('file-btn');  //false
-        // let enableFontResize =  document.getElementById('title'); //false
-        // let language =  document.getElementById('title'); // en
-
-        title.innerHTML = data.title;
-        subTitle.innerHTML = data.subTitle;
-        chatHeader.style.backgroundColor = data.theme;
-        chatIcon.style.backgroundColor = data.theme;
-        // customerReconnectTime = data.customerReconnectTime;
-        // enableDownloadTranscript.setAttribute("hidden", data.enableDownloadTranscript);
-        // enableDynamicLink.setAttribute("hidden", data.enableDynamicLink);
-        // enableEmoji.setAttribute("hidden", data.enableEmoji);
-        enableFileTransfer.setAttribute("hidden", data.enableFileTransfer);
-        // enableFontResize.setAttribute("hidden", data.enableFontResize);
-        // language.innerHTML = data.language.code.trim();
+    widgetConfigs(ccm_url, widget_identifier, (res) => {
+        setWidgetConfigs(res)
     });
 };
+
+function setWidgetConfigs(data) {
+    console.log('Console Data:', data);
+    // Widget Config Variables
+    let title = document.getElementById('title'); //Expertflow Chat
+    let subTitle = document.getElementById('subTitle'); //let's chat
+    let theme = document.documentElement; //Theme Color
+    let enableFileTransfer = document.getElementById('file-btn');  //false
+
+    title.innerHTML = data.title;
+    subTitle.innerHTML = data.subTitle;
+    theme.style.setProperty('--themeColor', data.theme);
+    (data.enableFileTransfer) ? enableFileTransfer.style.visibility = 'visible' : enableFileTransfer.style.visibility = 'hidden';
+}
 
 const textNode = document.getElementById('textBox');
 textNode.addEventListener('keyup', ({ key }) => {
@@ -71,23 +56,9 @@ fileNode.addEventListener('change', (event) => {
         filesAmount = event.dataTransfer.files;
     }
     if (filesAmount) {
-        selectedFile = filesAmount;
-        console.log('filesssssss222333', selectedFile.length)
-        // for (let i = 0; i < filesAmount.length; i++) {
-        //     const reader = new FileReader();
-        //     reader.onload = (event) => {
-        //         console.log(imageUrl, 'urlssssssss')
-        //         imageUrl.push({
-        //             filesPath: event.target.result,
-        //             fileType: event.target.result.split(":")[1].split("/")[0],
-        //             fileExt: event.target.result.split(":")[1].split("/")[1].split(";")[0],
-        //             fileName: filesAmount[i].name
-        //         });
-        //     };
-        //     reader.readAsDataURL(filesAmount[i]);
-        // }
+        console.log('filesssssss222333', filesAmount.length)
         let additionalText = '';
-        uploadFile(selectedFile, additionalText);
+        uploadFile(filesAmount, additionalText);
     }
 });
 
@@ -102,20 +73,21 @@ function changeScreen(screen) {
     console.log('Change Screen:', screen);
     switch (screen) {
         case 'chat':
+            formReset();
+            this.messages = [];
             console.log("show chat screen");
             document.getElementById("chatbox__form").style.display = "none";
             document.getElementById("chatbox__messages").style.display = "flex";
             document.getElementById("chatbox_footer").style.display = "flex";
             document.getElementById("chatbox__close").style.display = "inline-flex";
-            this.isChatClose = false;
             break;
         case 'form':
+            this.messages = [];
             console.log("show form screen");
             document.getElementById("chatbox__form").style.display = "block";
             document.getElementById("chatbox__messages").style.display = "none";
             document.getElementById("chatbox_footer").style.display = "none";
             document.getElementById("chatbox__close").style.display = "none";
-            this.isChatClose = true;
             break;
     }
 }
@@ -205,8 +177,6 @@ function setUserData(data) {
                     if (res.id !== undefined || res.id !== '' || res.id !== null) {
                         switch (res.type) {
                             case 'SOCKET_CONNECTED':
-                                this.isConnected = true;
-                                formReset();
                                 changeScreen('chat');
                                 this.chatPayLoad = { type: "CHAT_REQUESTED", data: customerData };
                                 chatRequest(this.chatPayLoad);
@@ -217,18 +187,16 @@ function setUserData(data) {
                                 break;
                             case 'MESSAGE_RECEIVED':
                                 this.messages.push(res.data);
+                                console.log('All Messages Received: ', this.messages);
                                 pushNotification(res.data);
                                 displayMessage();
                                 break;
                             case 'SOCKET_DISCONNECTED':
                                 if (res.data == 'io server disconnect' || res.data == 'server namespace disconnect') {
                                     console.log(`io server disconnect with reason: `, res.data);
-                                    this.chatStarted = false;
-                                    this.isConnected = false;
-                                    this.isChatClose = true;
-                                    this.message = [];
                                     changeScreen('form');
                                     localStorage.removeItem('user');
+                                    console.log('Messags Array: ', this.messages);
                                 }
                                 break;
                             case 'CONNECT_ERROR':
@@ -236,10 +204,6 @@ function setUserData(data) {
                                 localStorage.setItem('error', '1');
                                 break;
                             case 'CHAT_ENDED':
-                                this.chatStarted = false;
-                                this.isConnected = false;
-                                this.isChatClose = true;
-                                this.message = [];
                                 changeScreen('form');
                                 console.log('chat end: ', data);
                                 break;
@@ -307,15 +271,24 @@ function uploadFile(files, additionalText) {
                     fd.append("file", files[i]);
                     fd.append("conversationId", `${Math.floor(Math.random() * 90000) + 10000}`);
                     console.log("ready to Upload File", fileSize, fileMimeType);
+                    uploadToFileEngine(fd, (res) => {
+                        constructCimMessage(
+                            res.type.split('/')[0],
+                            '',
+                            null,
+                            null,
+                            res.type,
+                            res.name,
+                            res.size,
+                            additionalText,
+                            res.name.split('.').pop()
+                        );
+                    });
                 } else {
                     console.log(files[i].name + " File size should be less than 5MB");
-                    this.imageUrl = [];
-                    this.selectedFile = "";
                 }
             } else {
                 console.log(files[i].name + " File size should be less than 5MB");
-                this.imageUrl = [];
-                this.selectedFile = "";
             }
         }
     }
@@ -329,6 +302,51 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
         header.intent = intent ? intent : null;
         body.type = "PLAIN";
         body.markdownText = text.trim();
+    } else if (msgType.toLowerCase() == "application" || msgType.toLowerCase() == "text") {
+        body.type = "FILE";
+        body.markdownText = additionalText;
+        body["caption"] = "";
+        body["additionalDetails"] = { fileName: fileName };
+        body["attachment"] = {
+            mediaUrl: `${this.file_server_url}/api/downloadFileStream?filename=${fileName}`,
+            type: fileMimeType,
+            size: fileSize,
+            extType: fileType,
+            mimeType: fileMimeType
+        };
+    } else if (msgType.toLowerCase() == "image") {
+        body.type = "IMAGE";
+        body.markdownText = additionalText;
+        body["caption"] = fileName;
+        body["additionalDetails"] = {};
+        body["attachment"] = {
+            mediaUrl: `${this.file_server_url}/api/downloadFileStream?filename=${fileName}`,
+            type: fileMimeType,
+            size: fileSize,
+            thumbnail: ""
+        };
+    } else if (msgType.toLowerCase() == "video") {
+        body.type = "VIDEO";
+        body.markdownText = additionalText;
+        body["caption"] = fileName;
+        body["additionalDetails"] = {};
+        body["attachment"] = {
+            mediaUrl: `${this.file_server_url}/api/downloadFileStream?filename=${fileName}`,
+            type: fileMimeType,
+            size: fileSize,
+            thumbnail: ""
+        };
+    } else if (msgType.toLowerCase() == "audio") {
+        body.type = "AUDIO";
+        body.markdownText = additionalText;
+        body["caption"] = fileName;
+        body["additionalDetails"] = {};
+        body["attachment"] = {
+            mediaUrl: `${this.file_server_url}/api/downloadFileStream?filename=${fileName}`,
+            type: fileMimeType,
+            size: fileSize,
+            thumbnail: ""
+        };
     } else {
         console.log('Unable to process the file');
         return;
@@ -341,9 +359,6 @@ function constructCimMessage(msgType, text, intent, replyToMessageId, fileMimeTy
     }
     sendMessage(msgPayload);
     clearMessageComposer();
-    this.fileLoading = false;
-    this.imageUrl = [];
-    this.selectedFile = "";
 }
 
 function scrollToBottom() {
@@ -365,9 +380,55 @@ function displayMessage() {
         if (message.header.sender.type === 'BOT') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--operator">${message.body.markdownText}</div>`
-            }
-            if (message.body.type === 'BUTTON') {
-
+            } else if (message.body.type === 'IMAGE') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <img src='${message.body.attachment.mediaUrl}' alt='${message.body.caption}'/>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'FILE') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <span class="file-name">${message.body.additionalDetails.fileName}</span>
+                                <img class="file-type-message" src="images/file-type.svg" alt="${message.body.additionalDetails.fileName}" />
+                                <span class="file-ext-main">${message.body.attachment.mimeType.split('/')[1] == 'vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : message.body.attachment.mimeType.split('/')[1]}</span>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'VIDEO') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <video width='200' height='120' controls>
+                                    <source src='${message.body.attachment.mediaUrl}' type='video/mp4'>${message.body.caption}
+                                </video>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'URL') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                CLICK HERE
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'CONTACT') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href="https://api.whatsapp.com/send?phone=${message.body.contacts[0].phones[0].phone}&text=Hello%2C%20I%20want%20more%20info%20about%20the%20product." target="_blank">
+                                ${message.body.contacts[0].phones[0].phone}
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'LOCATION') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href="http://maps.google.com/?q=${msg.body.location.latitude},${msg.body.location.longitude}" target="_blank">
+                                CLICK HERE
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'AUDIO') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <audio class="audioPlayer" controls>
+                                    <source src="${message.body.attachment.mediaUrl}" type="audio/mpeg">${message.body.caption}
+                                </audio>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'BUTTON') {
                 msg += `<div class="chat-message agent-message bot-message">
                     <div class="chat-message-content structured-message">
                     <p><b>${message.body.additionalDetails.interactive.header.text}</b>
@@ -383,6 +444,54 @@ function displayMessage() {
         if (message.header.sender.type === 'AGENT') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--operator">${message.body.markdownText}</div>`
+            } else if (message.body.type === 'IMAGE') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <img src='${message.body.attachment.mediaUrl}' alt='${message.body.caption}'/>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'FILE') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <span class="file-name">${message.body.additionalDetails.fileName}</span>
+                                <img class="file-type-message" src="images/file-type.svg" alt="${message.body.additionalDetails.fileName}" />
+                                <span class="file-ext-main">${message.body.attachment.mimeType.split('/')[1] == 'vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : message.body.attachment.mimeType.split('/')[1]}</span>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'VIDEO') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <video width='200' height='120' controls>
+                                    <source src='${message.body.attachment.mediaUrl}' type='video/mp4'>${message.body.caption}
+                                </video>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'URL') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                CLICK HERE
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'CONTACT') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href="https://api.whatsapp.com/send?phone=${message.body.contacts[0].phones[0].phone}&text=Hello%2C%20I%20want%20more%20info%20about%20the%20product." target="_blank">
+                                ${message.body.contacts[0].phones[0].phone}
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'LOCATION') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href="http://maps.google.com/?q=${msg.body.location.latitude},${msg.body.location.longitude}" target="_blank">
+                                CLICK HERE
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'AUDIO') {
+                msg += `<div class="messages__item messages__item--operator">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <audio class="audioPlayer" controls>
+                                    <source src="${message.body.attachment.mediaUrl}" type="audio/mpeg">${message.body.caption}
+                                </audio>
+                            </a>
+                        </div>`
             } else if (message.body.type === 'NOTIFICATION') {
                 if (message.body.notificationType === 'AGENT_SUBSCRIBED') {
                     msg += `<div class="messages__item messages__item--notification">Agent join the conversation</div>`
@@ -394,18 +503,56 @@ function displayMessage() {
         if (message.header.sender.type === 'CUSTOMER') {
             if (message.body.type === 'PLAIN') {
                 msg += `<div class="messages__item messages__item--visitor">${message.body.markdownText}</div>`
+            } else if (message.body.type === 'IMAGE') {
+                msg += `<div class="messages__item messages__item--visitor">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <img src='${message.body.attachment.mediaUrl}' alt='${message.body.caption}'/>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'FILE') {
+                msg += `<div class="messages__item messages__item--visitor">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <span class="file-name">${message.body.additionalDetails.fileName}</span>
+                                <img class="file-type-message" src="images/file-type.svg" alt="${message.body.additionalDetails.fileName}" />
+                                <span class="file-ext-main">${message.body.attachment.mimeType.split('/')[1] == 'vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX' : message.body.attachment.mimeType.split('/')[1]}</span>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'VIDEO') {
+                msg += `<div class="messages__item messages__item--visitor">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <video width='200' height='120' controls>
+                                    <source src='${message.body.attachment.mediaUrl}' type='video/mp4'>${message.body.caption}
+                                </video>
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'URL') {
+                msg += `<div class="messages__item messages__item--visitor">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                CLICK HERE
+                            </a>
+                        </div>`
+            } else if (message.body.type === 'AUDIO') {
+                msg += `<div class="messages__item messages__item--visitor">
+                            <a href='${message.body.attachment.mediaUrl}' target='_blank'>
+                                <audio class="audioPlayer" controls>
+                                    <source src="${message.body.attachment.mediaUrl}" type="audio/mpeg">${message.body.caption}
+                                </audio>
+                            </a>
+                        </div>`
             }
         }
     })
     const chatMessage = document.getElementById('chatbox__messages');
     chatMessage.innerHTML = msg;
-    console.log('msg:', msg);
+    // console.log('msg:', msg);
     scrollToBottom();
 }
 
 function endChat() {
     let proceed = confirm("Are you sure to end the conversation?");
     if (proceed) {
+        this.messages = [];
+        // changeScreen('form');
         chatEnd(this.chatPayLoad.data);
     } else { return false; }
 }
