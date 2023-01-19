@@ -1,8 +1,8 @@
-const params = new URLSearchParams(window.location.search);
+// const params = new URLSearchParams(window.location.search);
 
-widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
-service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
-channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
+// widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
+// service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
+// channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
 var messages = [];
 let source = '';
 let conversationId;
@@ -133,8 +133,8 @@ function onSubmit(form) {
     try {
         let formData = $(form).serializeArray();
         console.log('Form Data:', formData);
+        let eventPayload = getEventPayload(formData);
         if (channel_customer_identifier && service_identifier) {
-            let eventPayload = getEventPayload(formData);
             setUserData(eventPayload);
             return false;
         } else {
@@ -172,7 +172,7 @@ function setUserData(data) {
         let user = { data: customerData };
         localStorage.setItem('user', JSON.stringify(user));
         if (localStorage.getItem('user')) {
-            establish_connection(service_identifier, channel_customer_identifier, (res) => {
+            establishConnection(service_identifier, channel_customer_identifier, (res) => {
                 try {
                     if (res.id !== undefined || res.id !== '' || res.id !== null) {
                         switch (res.type) {

@@ -45,12 +45,16 @@ body {
     background: var(--themeColor);
 }
 
+label {
+    margin-bottom: 0 !important;
+}
+
 /* CHATBOX
 =============== */
 .chatbox {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 5px;
+    right: 5px;
 }
 
 /* CONTENT IS CLOSE */
@@ -62,7 +66,16 @@ body {
     height: 350px;
     z-index: -123456;
     opacity: 0;
-    transition: all .5s ease-in-out;
+    transition: all .3s ease-in-out;
+    position: relative;
+}
+.form-control:focus {
+    border-color: inherit;
+    box-shadow: 0 0 0 0.2rem rgba(254, 255, 255, 0.25);
+}
+
+.startChatBtn {
+    margin-top: 80px;
 }
 
 /* CONTENT ISOPEN */
@@ -177,6 +190,11 @@ body {
     text-decoration: underline;
 }
 
+.btn:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
+
 /* FOOTER */
 .chatbox__footer {
     position: sticky;
@@ -195,13 +213,13 @@ body {
 /* HEADER */
 .chatbox__header {
     position: sticky;
-    height: 70px;
+    height: 50px;
     color: var(--primary-text);
     background: var(--themeColor);
     display: flex;
-    padding: 10px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+    padding: 0px 8px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
     box-shadow: var(--primaryBoxShadow);
 }
 
@@ -214,10 +232,16 @@ body {
     margin-top: 5px;
 }
 
+/* .chatbox__content--header {
+    margin-top: -5px;
+} */
 .chatbox__description--header {
     font-size: .7rem;
+    margin-top: -5px;
 }
-
+.chatbox__header--button {
+    margin: 0px 10px;
+}
 /* Messages */
 .chatbox__messages {
     padding: 0 10px;
@@ -255,12 +279,12 @@ body {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 20px;
+    padding: 15px 10px;
     background: var(--themeColor);
     box-shadow: var(--secondaryBoxShadow);
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .chatbox__footer input {
@@ -277,6 +301,7 @@ body {
     margin-left: auto;
     margin-top: 10px;
     color: var(--primary-text);
+    /* display: inline-flex; */
 }
 
 .chatbox__minus {
