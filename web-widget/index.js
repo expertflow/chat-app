@@ -544,7 +544,6 @@ function displayMessage() {
     })
     const chatMessage = document.getElementById('chatbox__messages');
     chatMessage.innerHTML = msg;
-    // console.log('msg:', msg);
     scrollToBottom();
 }
 
