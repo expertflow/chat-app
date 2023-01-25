@@ -10,6 +10,9 @@ let state = false;
 let chatPayLoad;
 let customerData;
 let input_disabled = false;
+var countervar;
+
+
 
 // Web Speech Api Setup
 const recognition = new webkitSpeechRecognition();
@@ -24,6 +27,7 @@ window.onload = () => {
     console.log("window loaded");
     widgetConfigs(ccm_url, widget_identifier, (res) => {
         setWidgetConfigs(res)
+        console.log(res, 'configs.....')
     });
 };
 
@@ -34,11 +38,16 @@ function setWidgetConfigs(data) {
     let subTitle = document.getElementById('subTitle'); //let's chat
     let theme = document.documentElement; //Theme Color
     let enableFileTransfer = document.getElementById('file-btn');  //false
-
     title.innerHTML = data.title;
     subTitle.innerHTML = data.subTitle;
     theme.style.setProperty('--themeColor', data.theme);
     (data.enableFileTransfer) ? enableFileTransfer.style.visibility = 'visible' : enableFileTransfer.style.visibility = 'hidden';
+    if(data.webRTC.enableWebRTC){
+        $('#audioCall, #videoCall').css('display', 'inline-block');
+    }else{
+        $('#audioCall, #videoCall').css('display', 'none');
+    }
+
 }
 
 const textNode = document.getElementById('textBox');
@@ -130,12 +139,14 @@ function getFormDataByPreChatForm(preChatFormData) {
 }
 
 function onSubmit(form) {
+    const queryType = document.activeElement.id
+
     try {
         let formData = $(form).serializeArray();
         console.log('Form Data:', formData);
+        let eventPayload = getEventPayload(formData);
         if (channel_customer_identifier && service_identifier) {
-            let eventPayload = getEventPayload(formData);
-            setUserData(eventPayload);
+            setUserData(eventPayload, queryType);
             return false;
         } else {
             if (!channel_customer_identifier) {
@@ -153,7 +164,7 @@ function onSubmit(form) {
     }
 }
 
-function setUserData(data) {
+function setUserData(data, queryType) {
     customerData = data;
     if (
         customerData.channelCustomerIdentifier == '' ||
@@ -169,68 +180,83 @@ function setUserData(data) {
             }
         }
     } else {
-        let user = { data: customerData };
-        localStorage.setItem('user', JSON.stringify(user));
-        if (localStorage.getItem('user')) {
-            establish_connection(service_identifier, channel_customer_identifier, (res) => {
-                try {
-                    if (res.id !== undefined || res.id !== '' || res.id !== null) {
-                        switch (res.type) {
-                            case 'SOCKET_CONNECTED':
-                                changeScreen('chat');
-                                this.chatPayLoad = { type: "CHAT_REQUESTED", data: customerData };
-                                chatRequest(this.chatPayLoad);
-                                break;
-                            case 'CHANNEL_SESSION_STARTED':
-                                this.conversationId = res.data.header.channelSession.conversationId;
-                                localStorage.setItem('conversationId', res.data.header.channelSession.conversationId);
-                                break;
-                            case 'MESSAGE_RECEIVED':
-                                this.messages.push(res.data);
-                                console.log('All Messages Received: ', this.messages);
-                                pushNotification(res.data);
-                                displayMessage();
-                                break;
-                            case 'SOCKET_DISCONNECTED':
-                                if (res.data == 'io server disconnect' || res.data == 'server namespace disconnect') {
-                                    console.log(`io server disconnect with reason: `, res.data);
-                                    changeScreen('form');
-                                    localStorage.removeItem('user');
-                                    console.log('Messags Array: ', this.messages);
-                                }
-                                break;
-                            case 'CONNECT_ERROR':
-                                console.log(`unable to establish connection with the server: `, res.data);
-                                localStorage.setItem('error', '1');
-                                break;
-                            case 'CHAT_ENDED':
-                                changeScreen('form');
-                                console.log('chat end: ', data);
-                                break;
-                            case 'ERRORS':
-                                if (res.data.task.toUpperCase() == 'CHAT_REQUESTED') {
-                                    if (res.data.code == 408) {
-                                        alert('Unable to connect with end server');
-                                    } else if (res.data.code == 400) {
-                                        alert('data is invalid');
-                                    } else if (res.data.code == 500) {
-                                        alert('Internal error with end server');
-                                    } else {
-                                        alert('Unable to send request');
-                                    }
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error on establishing connection: ', error)
-                }
-                console.log('Callback Function Response: ', res);
-            });
-        }
 
+        if(queryType == 'audioCall'){
+console.log(queryType, 'its an audio') ;
+            diallcall('audio');
+            displayAudio();
+
+            return false;
+
+        }else if(queryType == 'videoCall'){
+            console.log(queryType, 'its an video') ;
+            diallcall('video');
+
+        }else {
+
+
+            let user = {data: customerData};
+            localStorage.setItem('user', JSON.stringify(user));
+            if (localStorage.getItem('user')) {
+                establish_connection(service_identifier, channel_customer_identifier, (res) => {
+                    try {
+                        if (res.id !== undefined || res.id !== '' || res.id !== null) {
+                            switch (res.type) {
+                                case 'SOCKET_CONNECTED':
+                                    changeScreen('chat');
+                                    this.chatPayLoad = {type: "CHAT_REQUESTED", data: customerData};
+                                    chatRequest(this.chatPayLoad);
+                                    break;
+                                case 'CHANNEL_SESSION_STARTED':
+                                    this.conversationId = res.data.header.channelSession.conversationId;
+                                    localStorage.setItem('conversationId', res.data.header.channelSession.conversationId);
+                                    break;
+                                case 'MESSAGE_RECEIVED':
+                                    this.messages.push(res.data);
+                                    console.log('All Messages Received: ', this.messages);
+                                    pushNotification(res.data);
+                                    displayMessage();
+                                    break;
+                                case 'SOCKET_DISCONNECTED':
+                                    if (res.data == 'io server disconnect' || res.data == 'server namespace disconnect') {
+                                        console.log(`io server disconnect with reason: `, res.data);
+                                        changeScreen('form');
+                                        localStorage.removeItem('user');
+                                        console.log('Messags Array: ', this.messages);
+                                    }
+                                    break;
+                                case 'CONNECT_ERROR':
+                                    console.log(`unable to establish connection with the server: `, res.data);
+                                    localStorage.setItem('error', '1');
+                                    break;
+                                case 'CHAT_ENDED':
+                                    changeScreen('form');
+                                    console.log('chat end: ', data);
+                                    break;
+                                case 'ERRORS':
+                                    if (res.data.task.toUpperCase() == 'CHAT_REQUESTED') {
+                                        if (res.data.code == 408) {
+                                            alert('Unable to connect with end server');
+                                        } else if (res.data.code == 400) {
+                                            alert('data is invalid');
+                                        } else if (res.data.code == 500) {
+                                            alert('Internal error with end server');
+                                        } else {
+                                            alert('Unable to send request');
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error on establishing connection: ', error)
+                    }
+                    console.log('Callback Function Response: ', res);
+                });
+            }
+        }
     }
 }
 
@@ -600,4 +626,244 @@ function openBrowserNotification(head, message) {
                 });
         }
     }
+}
+
+function displayAudio(){
+
+
+    $('#chat_converse').css('display', 'block');
+    $('.call-initiating').css('display', 'block');
+    // // $('.chat_form_data').css('display', 'none');
+    // $('#video_chat_display').css('display', 'none');
+    // $('.circle').css("animation-play-state", "running");
+    // $('.circle').css("display", "block");
+    // $('.circle').css("background-color", "#f7f7f8");
+    // $('.circle').css("border-top", "2px solid #3463AD");
+    // $('.loading-image').css("display", "block");
+    // $('#remoteVideo').css('display', 'none');
+    // $('#myVideo-local').css('display', 'none');
+    // $("#Path_2116", $("#audio_btn")).attr('style', "fill:"+"#f5f5f5");
+    // $('#audio_mute').remove();
+}
+function events_callback (data){
+    console.log('sip.js Events -> '+JSON.stringify(data.event));
+
+    // let newObject = JSON.parse(window.localStorage.getItem('user'));
+    switch (data.event) {
+        case 'registered':
+            document.getElementById("video_time").innerHTML = 'registered';
+            document.getElementById("audio_time").innerHTML = 'registered';
+
+
+
+            var customer_data = {
+                // 'phone'     : userFormValues.find(o => o.key === 'phone').value,
+                // 'name'      : userFormValues.find(o => o.key === 'firstName').value,
+                // 'email'     : userFormValues.find(o => o.key === 'email').value,
+                // 'message'   : 'hello world',
+
+                'phone'     : $('#channelIdentifier').val(),
+                'name'      : $('#firstName').val(),
+                'email'     : $('#email').val(),
+                'message'   : 'hello world'
+            }
+            console.log(customer_data, 'customer_data')
+
+            // console.error(customer_data);
+            if ($('#video_chat_display').css('display') == 'none') {
+                send_invite('audio','remoteAudio','',customer_data)
+                    .catch(
+
+                    );
+            } else {
+                send_invite('video','remoteVideo','myVideo-local',customer_data)
+                    .catch(
+
+                    );
+            }
+
+            break;
+        case 'unregistered':
+            console.log( 'unregistered')
+            // document.getElementById("video_time").innerHTML = 'Unregistered';
+            // document.getElementById("audio_time").innerHTML = 'Unregistered';
+            // document.getElementById("remoteVideo").style.display='none';
+            // document.getElementById("remoteAudio").style.display='none';
+            // document.getElementById("myVideo-local").style.display='none';
+            // hideChat(0);
+            break;
+        case 'registrationFailed':
+            console.log( 'registrationFailed')
+
+        //     document.getElementById("video_time").innerHTML = 'registration failed '+ data.cause;
+        //     document.getElementById("audio_time").innerHTML = 'registration failed '+ data.cause;
+        //     break;
+        // case 'get_dynamic_ext':
+        //     if (data.cause === '') {
+        //         session = true;
+        //     }else {
+        //         hideChat(0);
+        //         $("#data_splash").text("Session Failed "+data.cause);
+        //         $('.data_splash').css('visibility','visible')
+        //         setTimeout(function(){
+        //             $('.data_splash').css('visibility','hidden');
+        //             $("#data_splash").text("");
+        //             // $("#data_splash").text("Your account is unregistered. Kindly register  to initiate chat or call.");
+        //             close_session();
+        //             clearInterval(countervar);
+        //         }, 3000);
+                // document.getElementById("video_time").innerHTML = 'get_dynamic_ext '+ data.cause;
+                // document.getElementById("audio_time").innerHTML = 'get_dynamic_ext '+ data.cause;
+
+            // }
+            break;
+        case 'Channel Creating':
+            console.log( 'Channel Creating')
+
+            //     document.getElementById("video_time").innerHTML = 'Channel Creating';
+        //     document.getElementById("audio_time").innerHTML = 'Channel Creating';
+            break;
+        case 'session-accepted':
+        //     if ($('#video_chat_display').css('display') == 'none') {
+                $("#audio_status span").text("Connected");
+                $("#chat_converse").addClass('call-connected');
+
+        //         $("#audio_descp span").text("Support");
+        //         $('.circle').css("background-color", "#3463AD");
+        //         $('.circle').css("border-top", "0px");
+        //         // document.getElementById("video_time").innerHTML = '00:01';
+                $('.circle').css("animation-play-state", "paused");
+        //         // $('.loading-image').css("display", "none");
+        //         // $('.circle').css("display", "none");
+        //         // $('#video_status').css("display", "none");
+        //         // $('#video_descp').css("display", "none");
+        //         // document.getElementById("remoteVideo").style.display='block';
+                document.getElementById("remoteAudio").style.display='block';
+        //         // document.getElementById("myVideo-local").style.display='block';
+        //
+        //     } else {
+        //         // document.getElementById("video_time").innerHTML = '00:01';
+        //         $('.circle').css("animation-play-state", "paused");
+        //         $('.loading-image').css("display", "none");
+        //         $('.circle').css("display", "none");
+        //         $('#video_status').css("display", "none");
+        //         $('#video_descp').css("display", "none");
+        //         document.getElementById("remoteVideo").style.display='block';
+        //         document.getElementById("remoteAudio").style.display='block';
+        //         document.getElementById("myVideo-local").style.display='block';
+        //         $('#video_time').css('display', 'none');
+        //         $('#video_time1').css('display', 'block');
+        //     }
+        //     counter();
+
+            break;
+        case 'session-progress':
+
+
+            console.log('session-progress ->' + data.response);
+            document.getElementById("video_time").innerHTML = 'Call Connecting';
+            document.getElementById("audio_time").innerHTML = 'Call Connecting';
+            break;
+        case 'session-rejected':
+            console.log('session-rejected->' +data.response +'------'+data.cause);
+        // document.getElementById("video_time").innerHTML = 'Session Declined '+data.cause;
+        // document.getElementById("audio_time").innerHTML = 'Session Declined '+data.cause;
+        // break;
+        case 'session-failed':
+            console.log('session-failed ->');
+
+            // console.log('testing->' +data.response +'------'+data.cause);
+            // document.getElementById("video_time").innerHTML = 'Session Failed '+data.cause;
+            // document.getElementById("audio_time").innerHTML = 'Session Failed '+data.cause;
+            // hideChat(0);
+            // console.log(typeof data.response);
+            // if (data.response === undefined) {
+            //     console.log(data.cause);
+            //     $("#data_splash").text("Session Failed Agents "+data.cause);
+            // } else {
+            //     console.log(data.response.reasonPhrase);
+            //     $("#data_splash").text("Session Failed Agents "+data.response.reasonPhrase);
+            // }
+            // $("#data_splash1").text("Sorry we are not able to connect you with the Customer Representative, please call back later.");
+            // $('.data_splash').css('visibility','visible')
+            // setTimeout(function(){
+            //     $('.data_splash').css('visibility','hidden');
+            //     $("#data_splash1").text("");
+            //     $("#data_splash").text("");
+            //     close_session();
+            //     clearInterval(countervar);
+            // }, 8000);
+            break;
+        case 'session-terminated':
+            // close_session();
+            console.log('testing->' +data.response +'------'+data.cause);
+        // $("#audio_status span").text("Please Wait");
+        // $("#audio_descp span").text("Initiating Audio Call to Support…");
+        // hideChat(0);
+        // document.getElementById("remoteVideo").style.display='none';
+        // document.getElementById("remoteAudio").style.display='none';
+        // break;
+        case 'session-bye':
+            // close_session();
+            console.log('testing->' +data.response);
+        // hideChat(0);
+        // document.getElementById("remoteVideo").style.display='none';
+        // document.getElementById("remoteAudio").style.display='none';
+        // break;
+        case 'session-session_ended':
+            console.log('session-session_ended ->');
+
+            // close_session();
+            // $("#audio_status span").text("Please Wait");
+            // $("#audio_descp span").text("Initiating Audio Call to Support…");
+            // hideChat(0);
+            // document.getElementById("remoteVideo").style.display='none';
+            // document.getElementById("remoteAudio").style.display='none';
+            break;
+        case 'session-SessionDescriptionHandler-Media acquire start':
+            media_acquire = 'start';
+            // console.log("test-start");
+            break;
+        case 'session-SessionDescriptionHandler-Media acquire end':
+            // console.log("test-end");
+            media_acquire = 'end';
+            break;
+
+    }
+}
+
+$('#chat_close').click(function(e){
+    if(session === true){
+        var r = confirm("Are you you want to leave session!");
+        if (r == true) {
+            close_session();
+            clearInterval(countervar);
+            session = false;
+        } else {
+            toggleFab();
+        }
+    }else{
+        toggleFab();
+        hideChat(0);
+    }
+});
+
+
+function endcall() {
+    close_session();
+    clearInterval(countervar);
+
+    $('#chat_converse').css('display', 'none');
+    $('.call-initiating').css('display', 'none');
+
+    // if (session === true) {
+    //     close_session();
+    //     clearInterval(countervar);
+    // } else {
+    //     toggleFab();
+    //     hideChat(0);
+    // }
+
+
+
 }
