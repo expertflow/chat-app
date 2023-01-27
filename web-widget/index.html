@@ -8,7 +8,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+          integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="style.css" rel="stylesheet">
     <!-- End Script Tags -->
 
@@ -50,11 +52,11 @@
                             </div>
                             <div class="mb-2">
                                 <label for="lastName"><small>Last Name</small></label>
-                                <input type="text" name="lastName" class="form-control form-control-sm"  value="test1" id="lastName" required>
+                                <input type="text" name="lastName" class="form-control form-control-sm"  value="test1" id="lastName">
                             </div>
                             <div class="mb-2">
                                 <label for="email"><small>Email</small></label>
-                                <input type="email" name="email" class="form-control form-control-sm" id="email"  value="email@test.cc" required>
+                                <input type="email" name="email" class="form-control form-control-sm" id="email"  value="email@test.cc">
                             </div>
 
                                <div class="mb-2">
@@ -69,7 +71,7 @@
                                     id="channelIdentifier" required>
                             </div>
                             <div class="mt-3 mb-4 text-center">
-                                <input type="submit" id="initateChate" class="btn btn-default formTrigger" name="start_chat" value="Start Chat">
+                                <input type="submit" id="startChat" class="btn btn-default formTrigger" name="start_chat" value="Start Chat">
                                 <input type="submit" id="audioCall" class="btn btn-default formTrigger" name="start_audio" value="Start audio">
                                 <input type="submit" id="videoCall" class="btn btn-default formTrigger" name="start_video" value="Start video">
                             </div>
@@ -98,158 +100,40 @@
 
 <!--              Start web-RTC  -->
 
-<div class="call-initiating">
+<div class="call-initiating" id="call-area">
+    <div class="call-status-area">
+        <div id='call_status' class="call_status">
+            <span>Please Wait</span>
+        </div>
+        <span id="call-time"></span>
+        <div class="wrapper">
+            <div class="circle"></div>
+        </div>
+        <div id='call_descp' class="call_descp">
+            <span>Initiating Audio Call to Support…</span>
+        </div>
+        <div class="call_time">
+            <span id="call_time"></span>
+        </div>
+    </div>
 
                 <div id="chat_converse" >
                     <audio autoplay="autoplay" id="remoteAudio"></audio>
-                    <div id='audio_status' class="audio_status">
-                        <span>Please Wait</span>
-                    </div>
-                    <div class="wrapper">
-                        <div class="circle"></div>
-                            <i class="fa-phone fa loading-image" id="user_copy_2" ></i>
-                    </div>
-                    <div id='audio_descp' class="audio_descp">
-                        <span>Initiating Audio Call to Support…</span>
-                    </div>
-                    <div class="audio_time">
-                        <span id="audio_time"></span>
-                    </div>
-<!--                    <div class="call_control">-->
-<!--                        <button class="callcontrollButton" onclick="endcall()">-->
-<!--                            <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 56 56">-->
-<!--                                <g id="Group_2988" data-name="Group 2988" transform="translate(-898.107 -695)">-->
-<!--                                    <circle id="Ellipse_12" data-name="Ellipse 12" cx="28" cy="28" r="28" transform="translate(898.107 695)" fill="#fc1010"/>-->
-<!--                                    <g id="call_copy" data-name="call copy" transform="translate(941.045 724.681) rotate(135)">-->
-<!--                                        <g id="Group_2912" data-name="Group 2912" transform="translate(0 0)">-->
-<!--                                            <path id="Path_105" data-name="Path 105" d="M19.43,13.866a11.994,11.994,0,0,1-3.767-.6,1.722,1.722,0,0,0-1.674.353l-2.375,1.793a13.127,13.127,0,0,1-5.9-5.9L7.452,7.2a1.707,1.707,0,0,0,.42-1.73A12.012,12.012,0,0,1,7.27,1.7,1.7,1.7,0,0,0,5.575,0H1.7A1.7,1.7,0,0,0,0,1.7a19.452,19.452,0,0,0,19.43,19.43,1.7,1.7,0,0,0,1.7-1.7V15.561A1.7,1.7,0,0,0,19.43,13.866Z" transform="translate(0 0)" fill="#fff"/>-->
-<!--                                        </g>-->
-<!--                                    </g>-->
-<!--                                </g>-->
-<!--                            </svg>-->
-<!--                        </button>-->
-<!--                        &lt;!&ndash; <button class="callcontrollButton" onclick="alert('☕☕☕☕Coffee 4Dayz')">-->
-<!--                            <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 56 56">-->
-<!--                                <g id="Group_2996" data-name="Group 2996" transform="translate(-1235 -686)">-->
-<!--                                    <path id="Path_2116" data-name="Path 2116" d="M28,0A28,28,0,1,1,0,28,28,28,0,0,1,28,0Z" transform="translate(1235 686)" fill="#f5f5f5"/>-->
-<!--                                    <g id="pause_black_24dp" transform="translate(1249 700)">-->
-<!--                                    <path id="Path_2128" data-name="Path 2128" d="M0,0H28.276V28.276H0Z" fill="none"/>-->
-<!--                                    <path id="Path_2129" data-name="Path 2129" d="M6,21.494h4.713V5H6ZM15.425,5V21.494h4.713V5Z" transform="translate(1.069 0.891)" fill="#868686"/>-->
-<!--                                    </g>-->
-<!--                                </g>-->
-<!--                            </svg>-->
-<!--                        </button> &ndash;&gt;-->
-<!--                        <button class="callcontrollButton" onclick="audio_btn()">-->
-<!--                            <svg id='audio_btn'  xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 56 56">-->
-<!--                                <g id="Group_2992" data-name="Group 2992" transform="translate(-491 -688)">-->
-<!--                                    <path id="Path_2116" data-name="Path 2116" d="M28,0A28,28,0,1,1,0,28,28,28,0,0,1,28,0Z" transform="translate(491 688)" fill="#f5f5f5"/>-->
-<!--                                    <g id="mic_black_24dp" transform="translate(507 704)">-->
-<!--                                        <g id="Group_2950" data-name="Group 2950">-->
-<!--                                            <rect id="Rectangle_149" data-name="Rectangle 149" width="25" height="25" fill="none"/>-->
-<!--                                            <rect id="Rectangle_150" data-name="Rectangle 150" width="25" height="25" fill="none"/>-->
-<!--                                            <rect id="Rectangle_151" data-name="Rectangle 151" width="25" height="25" fill="none"/>-->
-<!--                                        </g>-->
-<!--                                        <g id="Group_2952" data-name="Group 2952" transform="translate(5.252 2.101)">-->
-<!--                                            <g id="Group_2951" data-name="Group 2951">-->
-<!--                                                <path id="Path_2110" data-name="Path 2110" d="M12.151,14.6A3.147,3.147,0,0,0,15.3,11.453v-6.3a3.151,3.151,0,1,0-6.3,0v6.3A3.147,3.147,0,0,0,12.151,14.6Z" transform="translate(-4.799 -2)" fill="#868686"/>-->
-<!--                                                <path id="Path_2111" data-name="Path 2111" d="M17.6,11A5.252,5.252,0,1,1,7.1,11H5a7.347,7.347,0,0,0,6.3,7.268V21.5h2.1V18.268A7.347,7.347,0,0,0,19.7,11Z" transform="translate(-5 -1.547)" fill="#868686"/>-->
-<!--                                            </g>-->
-<!--                                        </g>-->
-<!--                                    </g>-->
-<!--                                </g>-->
-<!--                            </svg>-->
-<!--                        </button>-->
-<!--                    </div>-->
                 </div>
 
-                <div id="video_chat_display"  >
-                    <!-- <video autoplay muted loop id="myVideo">
-                        <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4">
-                        Your browser does not support HTML5 video.
-                    </video> -->
-                    <!-- audio and video tag shuld be added for the remote voice and image -->
+                <div id="video_chat_display" >
                     <video autoplay="autoplay" id="remoteVideo" class="myVideo"  >
-                        <!-- <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4"> -->
+                        Your browser does not support HTML5 video.
                     </video>
-                    <div id='video_status' class="audio_status">
-                        <span>Please Wait</span>
-                    </div>
+
                     <div class="customer_video_display">
                         <!-- video tag to display local image in video call -->
                         <video autoplay id="myVideo-local" class="local-video" >
-                            <!-- <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4"> -->
                             Your browser does not support HTML5 video.
                         </video>
-                        <div class="audio_time">
-                            <span id="video_time1"></span>
+                        <div class="call_time">
+                            <span id="call_time1"></span>
                         </div>
-                    </div>
-                    <div class="wrapper">
-                        <div class="circle"></div>
-                        <svg class="loading-image" id="user_copy_2" data-name="user copy 2" xmlns="http://www.w3.org/2000/svg" width="18.955" height="21.566" viewBox="0 0 18.955 21.566">
-                            <g id="Group_2942" data-name="Group 2942" transform="translate(3.791)">
-                                <g id="Group_2941" data-name="Group 2941">
-                                    <path id="Path_2104" data-name="Path 2104" d="M126.686,0a5.686,5.686,0,1,0,5.686,5.686A5.693,5.693,0,0,0,126.686,0Z" transform="translate(-121)" fill="#e0e0e0"/>
-                                </g>
-                            </g>
-                            <g id="Group_2944" data-name="Group 2944" transform="translate(0 12.637)">
-                                <g id="Group_2943" data-name="Group 2943">
-                                    <path id="Path_2105" data-name="Path 2105" d="M47.552,302.451A8.106,8.106,0,0,0,41.741,300H39.214a8.106,8.106,0,0,0-5.811,2.451A8.287,8.287,0,0,0,31,308.3a.632.632,0,0,0,.632.632H49.323a.632.632,0,0,0,.632-.632A8.287,8.287,0,0,0,47.552,302.451Z" transform="translate(-31 -300)" fill="#e0e0e0"/>
-                                </g>
-                            </g>
-                        </svg>
-                    </div>
-                    <div id='video_descp' class="audio_descp">
-                        <span >Initiating Video Call to Support…</span>
-                    </div>
-                    <div class="audio_time">
-                        <span id="video_time">00:10</span>
-                    </div>
-                    <div class="call_control">
-                        <ul class="control-list">
-                            <li class="end-call" onclick="endcall()"><i class="fa-phone fa"></i></li>
-                            <li class="hold-call"><i class="fa-pause fa"></i></li>
-                            <li class="mute-call" onclick="audio_btn()"><i class="fa fa-microphone"></i></li>
-                        </ul>
-
-
-                        <button class="callcontrollButton" onclick="endcall()">
-                            <i class="fa-phone chatbox__icon fa fa-3x"></i>
-                        </button>
-                        <button class="callcontrollButton" onclick="stopanimation()">
-
-                        </button>
-                        <!-- <button class="callcontrollButton" onclick="alert('☕☕☕☕Coffee 4Dayz')">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
-                                <g id="Group_3054" data-name="Group 3054" transform="translate(-491 -688)">
-                                  <path id="Path_2116" data-name="Path 2116" d="M28,0A28,28,0,1,1,0,28,28,28,0,0,1,28,0Z" transform="translate(491 688)" fill="#f5f5f5"/>
-                                  <g id="present_to_all_black_24dp" transform="translate(507 704)">
-                                    <path id="Path_2113" data-name="Path 2113" d="M0,0H24V24H0Z" fill="none"/>
-                                    <path id="Path_2114" data-name="Path 2114" d="M21,3H3A1.993,1.993,0,0,0,1,5V19a1.993,1.993,0,0,0,2,2H21a1.993,1.993,0,0,0,2-2V5A1.993,1.993,0,0,0,21,3Zm0,16.02H3V4.98H21ZM10,12H8l4-4,4,4H14v4H10Z" fill="#868686"/>
-                                  </g>
-                                </g>
-                            </svg>
-                        </button> -->
-                        <button class="callcontrollButton" onclick="audio_btn()">
-                            <svg id='audio_btn1' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
-                                <g id="Group_2992" data-name="Group 2992" transform="translate(-491 -688)">
-                                    <path id="Path_2116" data-name="Path 2116" d="M28,0A28,28,0,1,1,0,28,28,28,0,0,1,28,0Z" transform="translate(491 688)" fill="#f5f5f5"/>
-                                    <g id="mic_black_24dp" transform="translate(507 704)">
-                                        <g id="Group_2950" data-name="Group 2950">
-                                            <rect id="Rectangle_149" data-name="Rectangle 149" width="25" height="25" fill="none"/>
-                                            <rect id="Rectangle_150" data-name="Rectangle 150" width="25" height="25" fill="none"/>
-                                            <rect id="Rectangle_151" data-name="Rectangle 151" width="25" height="25" fill="none"/>
-                                        </g>
-                                        <g id="Group_2952" data-name="Group 2952" transform="translate(5.252 2.101)">
-                                            <g id="Group_2951" data-name="Group 2951">
-                                                <path id="Path_2110" data-name="Path 2110" d="M12.151,14.6A3.147,3.147,0,0,0,15.3,11.453v-6.3a3.151,3.151,0,1,0-6.3,0v6.3A3.147,3.147,0,0,0,12.151,14.6Z" transform="translate(-4.799 -2)" fill="#868686"/>
-                                                <path id="Path_2111" data-name="Path 2111" d="M17.6,11A5.252,5.252,0,1,1,7.1,11H5a7.347,7.347,0,0,0,6.3,7.268V21.5h2.1V18.268A7.347,7.347,0,0,0,19.7,11Z" transform="translate(-5 -1.547)" fill="#868686"/>
-                                            </g>
-                                        </g>
-                                    </g>
-                                </g>
-                            </svg>
-                        </button>
                     </div>
                 </div>
 
@@ -257,8 +141,8 @@
                 <div class="call_control">
                     <ul class="control-list">
                         <li class="end-call" onclick="endcall()"><i class="fa-phone fa"></i></li>
-                        <li class="mute-call" onclick="audio_btn()"><i class="fa fa-microphone"></i></li>
-                        <li class="hold-call"><i class="fa-pause fa"></i></li>
+                        <li id="muteAudio" class="mute-call" onclick="audioControl()"><i  class="fa fa-microphone"></i></li>
+                        <li  id="showVideo" class="hold-call" onclick="videoControl()"><i class="fa fa-video"></i></li>
                     </ul>
 
 

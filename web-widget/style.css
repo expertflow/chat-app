@@ -377,15 +377,13 @@ body {
     display: block;
     border-top: 2px solid rgb(52, 99, 173);
 }
-.loading-image {
-    position: absolute;
-    top: 5px;
-    left: 45%;
-    font-size: 3em;
-    font-weight: 500;
-    color: #fff;
-}
-.audio_descp {
+/*.circle:before {*/
+/*    content: '\f095';*/
+/*    font-family: 'FontAwesome';*/
+/*    font-size: 2.2em;*/
+/*    color: #3463ad*/
+/*}*/
+.call_descp {
     width: 100%;
     text-align: center;
     font-size: 15px;
@@ -411,7 +409,10 @@ body {
     background: #fff;
     width: 100%;
 }
-
+.call-status-area{
+    text-align: center;
+    padding: 20px 10px;
+}
 .call_control {
     position: absolute;
     bottom: 22px;
@@ -442,6 +443,12 @@ ul.control-list li {
 li.end-call{
     background: #f13f3a !important;
 }
+#showVideo{
+    display: none;
+}
+#muteAudio .fa-microphone-slash, #showVideo .fa-video-slash{
+    color: #fff;
+}
 ul.control-list li.end-call .fa {
     transform: rotate(135deg);
     color: #fff;
@@ -451,7 +458,9 @@ ul.control-list li .fa {
     color: #8e8989;
 }
 
-
+.local-video{
+    width: 100%;
+}
 
 @keyframes animate {
     0% {

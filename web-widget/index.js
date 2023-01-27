@@ -11,6 +11,7 @@ let chatPayLoad;
 let customerData;
 let input_disabled = false;
 var countervar;
+var isWebRtcEnabled = false;
 
 
 
@@ -43,6 +44,7 @@ function setWidgetConfigs(data) {
     theme.style.setProperty('--themeColor', data.theme);
     (data.enableFileTransfer) ? enableFileTransfer.style.visibility = 'visible' : enableFileTransfer.style.visibility = 'hidden';
     if(data.webRTC.enableWebRTC){
+        isWebRtcEnabled = true;
         $('#audioCall, #videoCall').css('display', 'inline-block');
     }else{
         $('#audioCall, #videoCall').css('display', 'none');
@@ -181,20 +183,17 @@ function setUserData(data, queryType) {
         }
     } else {
 
-        if(queryType == 'audioCall'){
+        if(queryType == 'audioCall' && isWebRtcEnabled){
 console.log(queryType, 'its an audio') ;
             diallcall('audio');
             displayAudio();
-
             return false;
 
-        }else if(queryType == 'videoCall'){
+        }else if(queryType == 'videoCall' && isWebRtcEnabled){
             console.log(queryType, 'its an video') ;
-            diallcall('video');
 
-        }else {
-
-
+            videoCallStart();
+        }else if(queryType == 'startChat'){
             let user = {data: customerData};
             localStorage.setItem('user', JSON.stringify(user));
             if (localStorage.getItem('user')) {
@@ -256,6 +255,9 @@ console.log(queryType, 'its an audio') ;
                     console.log('Callback Function Response: ', res);
                 });
             }
+        } else{
+            console.log('something went wrong with the query type');
+            return false;
         }
     }
 }
@@ -628,11 +630,40 @@ function openBrowserNotification(head, message) {
     }
 }
 
+
+
+
+//web-rtc
+
+function counter (){
+    var countDownDate = new Date().getTime();
+    countervar = setInterval(function() {
+        var now = new Date().getTime();
+        var distance = (now - countDownDate);
+
+        // Time calculations for minutes and seconds
+        var minutes = ("0" + Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).slice(-2);
+        var seconds = ("0" + Math.floor((distance % (1000 * 60)) / 1000)).slice(-2);
+        // console.log(minutes + ":" + seconds);
+        // Output the result in an element
+        $("#call-time").text(minutes + ":" + seconds);
+        // document.getElementById("demo").innerHTML = minutes + ":" + seconds ;
+
+        // If the count down is over, as reach 1 hr
+        if (distance > 3600000) {
+            clearInterval(countervar);
+            $("#call-time").text("");
+            close_session();
+        }
+    }, 1000);
+}
+
 function displayAudio(){
 
 
     $('#chat_converse').css('display', 'block');
     $('.call-initiating').css('display', 'block');
+     $('#showVideo ').css('display', 'none');
     // // $('.chat_form_data').css('display', 'none');
     // $('#video_chat_display').css('display', 'none');
     // $('.circle').css("animation-play-state", "running");
@@ -640,28 +671,26 @@ function displayAudio(){
     // $('.circle').css("background-color", "#f7f7f8");
     // $('.circle').css("border-top", "2px solid #3463AD");
     // $('.loading-image').css("display", "block");
-    // $('#remoteVideo').css('display', 'none');
-    // $('#myVideo-local').css('display', 'none');
-    // $("#Path_2116", $("#audio_btn")).attr('style', "fill:"+"#f5f5f5");
+    $('#remoteVideo').css('display', 'none');
+    $('#myVideo-local').css('display', 'none');
+    // $("#Path_2116", $("#audioControl")).attr('style', "fill:"+"#f5f5f5");
     // $('#audio_mute').remove();
+    $('#muteAudio').css("background", "#f1f1f1");
+    $('#muteAudio i').attr('class', 'fa fa-microphone');
+    $("#call_descp span").text("Initiating Video Call to Support…");
+
 }
 function events_callback (data){
     console.log('sip.js Events -> '+JSON.stringify(data.event));
 
     // let newObject = JSON.parse(window.localStorage.getItem('user'));
+
+
     switch (data.event) {
         case 'registered':
-            document.getElementById("video_time").innerHTML = 'registered';
-            document.getElementById("audio_time").innerHTML = 'registered';
-
-
-
+            document.getElementById("call_time").innerHTML = 'registered';
+            document.getElementById("call_time").innerHTML = 'registered';
             var customer_data = {
-                // 'phone'     : userFormValues.find(o => o.key === 'phone').value,
-                // 'name'      : userFormValues.find(o => o.key === 'firstName').value,
-                // 'email'     : userFormValues.find(o => o.key === 'email').value,
-                // 'message'   : 'hello world',
-
                 'phone'     : $('#channelIdentifier').val(),
                 'name'      : $('#firstName').val(),
                 'email'     : $('#email').val(),
@@ -685,96 +714,81 @@ function events_callback (data){
             break;
         case 'unregistered':
             console.log( 'unregistered')
-            // document.getElementById("video_time").innerHTML = 'Unregistered';
-            // document.getElementById("audio_time").innerHTML = 'Unregistered';
+            document.getElementById("call_time").innerHTML = 'Unregistered';
+            document.getElementById("call_time").innerHTML = 'Unregistered';
             // document.getElementById("remoteVideo").style.display='none';
             // document.getElementById("remoteAudio").style.display='none';
-            // document.getElementById("myVideo-local").style.display='none';
+            document.getElementById("myVideo-local").style.display='none';
             // hideChat(0);
             break;
         case 'registrationFailed':
             console.log( 'registrationFailed')
 
-        //     document.getElementById("video_time").innerHTML = 'registration failed '+ data.cause;
-        //     document.getElementById("audio_time").innerHTML = 'registration failed '+ data.cause;
+            document.getElementById("call_time").innerHTML = 'registration failed '+ data.cause;
+            document.getElementById("call_time").innerHTML = 'registration failed '+ data.cause;
         //     break;
-        // case 'get_dynamic_ext':
-        //     if (data.cause === '') {
-        //         session = true;
-        //     }else {
-        //         hideChat(0);
-        //         $("#data_splash").text("Session Failed "+data.cause);
-        //         $('.data_splash').css('visibility','visible')
-        //         setTimeout(function(){
-        //             $('.data_splash').css('visibility','hidden');
-        //             $("#data_splash").text("");
-        //             // $("#data_splash").text("Your account is unregistered. Kindly register  to initiate chat or call.");
-        //             close_session();
-        //             clearInterval(countervar);
-        //         }, 3000);
-                // document.getElementById("video_time").innerHTML = 'get_dynamic_ext '+ data.cause;
-                // document.getElementById("audio_time").innerHTML = 'get_dynamic_ext '+ data.cause;
-
-            // }
+        case 'get_dynamic_ext':
+            if (data.cause === '') {
+            }else {
+                document.getElementById("call_time").innerHTML = 'get_dynamic_ext '+ data.cause;
+            }
             break;
         case 'Channel Creating':
             console.log( 'Channel Creating')
 
-            //     document.getElementById("video_time").innerHTML = 'Channel Creating';
-        //     document.getElementById("audio_time").innerHTML = 'Channel Creating';
+                document.getElementById("call_time").innerHTML = 'Channel Creating';
+            document.getElementById("call_time").innerHTML = 'Channel Creating';
             break;
         case 'session-accepted':
         //     if ($('#video_chat_display').css('display') == 'none') {
-                $("#audio_status span").text("Connected");
+                $("#call_status span").text("Connected");
                 $("#chat_converse").addClass('call-connected');
 
-        //         $("#audio_descp span").text("Support");
+        //         $("#call_descp span").text("Support");
         //         $('.circle').css("background-color", "#3463AD");
         //         $('.circle').css("border-top", "0px");
-        //         // document.getElementById("video_time").innerHTML = '00:01';
+        //         // document.getElementById("call_time").innerHTML = '00:01';
                 $('.circle').css("animation-play-state", "paused");
         //         // $('.loading-image').css("display", "none");
         //         // $('.circle').css("display", "none");
-        //         // $('#video_status').css("display", "none");
-        //         // $('#video_descp').css("display", "none");
+        //         // $('#call_status').css("display", "none");
+        //         // $('#call_descp').css("display", "none");
         //         // document.getElementById("remoteVideo").style.display='block';
                 document.getElementById("remoteAudio").style.display='block';
-        //         // document.getElementById("myVideo-local").style.display='block';
+                // document.getElementById("myVideo-local").style.display='block';
         //
         //     } else {
-        //         // document.getElementById("video_time").innerHTML = '00:01';
+        //         // document.getElementById("call_time").innerHTML = '00:01';
         //         $('.circle').css("animation-play-state", "paused");
         //         $('.loading-image').css("display", "none");
         //         $('.circle').css("display", "none");
-        //         $('#video_status').css("display", "none");
-        //         $('#video_descp').css("display", "none");
+        //         $('#call_status').css("display", "none");
+        //         $('#call_descp').css("display", "none");
         //         document.getElementById("remoteVideo").style.display='block';
-        //         document.getElementById("remoteAudio").style.display='block';
-        //         document.getElementById("myVideo-local").style.display='block';
-        //         $('#video_time').css('display', 'none');
-        //         $('#video_time1').css('display', 'block');
+                document.getElementById("remoteAudio").style.display='block';
+                document.getElementById("myVideo-local").style.display='block';
+        //         $('#call_time').css('display', 'none');
+        //         $('#call_time1').css('display', 'block');
         //     }
-        //     counter();
+            counter();
 
             break;
         case 'session-progress':
 
 
             console.log('session-progress ->' + data.response);
-            document.getElementById("video_time").innerHTML = 'Call Connecting';
-            document.getElementById("audio_time").innerHTML = 'Call Connecting';
+            document.getElementById("call_time").innerHTML = 'Call Connecting';
             break;
         case 'session-rejected':
             console.log('session-rejected->' +data.response +'------'+data.cause);
-        // document.getElementById("video_time").innerHTML = 'Session Declined '+data.cause;
-        // document.getElementById("audio_time").innerHTML = 'Session Declined '+data.cause;
+        document.getElementById("call_time").innerHTML = 'Session Declined '+data.cause;
+        // document.getElementById("call_time").innerHTML = 'Session Declined '+data.cause;
         // break;
         case 'session-failed':
             console.log('session-failed ->');
 
             // console.log('testing->' +data.response +'------'+data.cause);
-            // document.getElementById("video_time").innerHTML = 'Session Failed '+data.cause;
-            // document.getElementById("audio_time").innerHTML = 'Session Failed '+data.cause;
+            document.getElementById("call_time").innerHTML = 'Session Failed '+data.cause;
             // hideChat(0);
             // console.log(typeof data.response);
             // if (data.response === undefined) {
@@ -797,11 +811,11 @@ function events_callback (data){
         case 'session-terminated':
             // close_session();
             console.log('testing->' +data.response +'------'+data.cause);
-        // $("#audio_status span").text("Please Wait");
-        // $("#audio_descp span").text("Initiating Audio Call to Support…");
+        $("#call_status span").text("Please Wait");
+        // $("#call_descp span").text("Initiating Audio Call to Support…");
         // hideChat(0);
-        // document.getElementById("remoteVideo").style.display='none';
-        // document.getElementById("remoteAudio").style.display='none';
+        document.getElementById("remoteVideo").style.display='none';
+        document.getElementById("remoteAudio").style.display='none';
         // break;
         case 'session-bye':
             // close_session();
@@ -814,8 +828,8 @@ function events_callback (data){
             console.log('session-session_ended ->');
 
             // close_session();
-            // $("#audio_status span").text("Please Wait");
-            // $("#audio_descp span").text("Initiating Audio Call to Support…");
+            // $("#call_status span").text("Please Wait");
+            // $("#call_descp span").text("Initiating Audio Call to Support…");
             // hideChat(0);
             // document.getElementById("remoteVideo").style.display='none';
             // document.getElementById("remoteAudio").style.display='none';
@@ -832,29 +846,31 @@ function events_callback (data){
     }
 }
 
-$('#chat_close').click(function(e){
-    if(session === true){
-        var r = confirm("Are you you want to leave session!");
-        if (r == true) {
-            close_session();
-            clearInterval(countervar);
-            session = false;
-        } else {
-            toggleFab();
-        }
-    }else{
-        toggleFab();
-        hideChat(0);
-    }
-});
+// $('#chat_close').click(function(e){
+//     if(session === true){
+//         var r = confirm("Are you you want to leave session!");
+//         if (r == true) {
+//             close_session();
+//             clearInterval(countervar);
+//             session = false;
+//         } else {
+//             // toggleFab();
+//         }
+//     }else{
+//         // toggleFab();
+//         // hideChat(0);
+//     }
+// });
 
 
 function endcall() {
     close_session();
     clearInterval(countervar);
-
     $('#chat_converse').css('display', 'none');
     $('.call-initiating').css('display', 'none');
+    $('#video_chat_display').css('display', 'none');
+    $('#remoteVideo').css('display', 'none');
+    $('#myVideo-local').css('display', 'none');
 
     // if (session === true) {
     //     close_session();
@@ -863,7 +879,70 @@ function endcall() {
     //     toggleFab();
     //     hideChat(0);
     // }
+}
+
+function videoCallStart () {
+    var name = $('#firstName')[0].checkValidity();
+    var email = $('#email')[0].checkValidity();
+    var phone = $('#phone')[0].checkValidity();
+    // var name = $('#fname').val().trim();
+    // var email = $('#email').val().trim();
+    // var phone = $('#phone').val().trim(); // consider giving this an id too
+    var message = 'this is a message';
+    if (name && email && phone && message) {
+        // call sipcontrol.js function to initiate a video or audio call
+        diallcall('video');
+        $('#remoteVideo').css('display', 'block');
+        $('#myVideo-local').css('display', 'block');
+        $('#video_chat_display').css('display', 'block');
+        $('.call-initiating').css('display', 'block');
+         $("#call_descp span").text("Initiating Video Call to Support…");
+        $('#showVideo ').css('display', 'inline-block');
 
 
+        // counter();
+        // hideChat(2);
+    } else {
+        $('#firstName')[0].reportValidity();
+        $('#email')[0].reportValidity();
+        $('#phone')[0].reportValidity();
+    }
 
 }
+
+
+
+function audioControl(){
+    audio_control();
+
+    // change to red
+    if (audio === 'true') {
+        console.log('audio value before1', audio)
+        audio = 'true';
+        $('#muteAudio').css("background", "#f13f3a");
+         $('#muteAudio i').attr('class', 'fa fa-microphone-slash');
+        console.log('audio value after1', audio)
+
+    } else {
+        console.log('audio value before', audio)
+        audio = 'false';
+              $('#muteAudio').css("background", "#f1f1f1");
+       $('#muteAudio i').attr('class', 'fa fa-microphone');
+        console.log('audio value after', audio)
+
+    }
+}
+function videoControl(){
+    video_control();
+// <i class="fa-solid fa-video-slash"></i>
+    if (video === 'true') {
+        video = 'true';
+        $('#showVideo').css("background", "#f1f1f1");
+        $('#showVideo i').attr('class', 'fa fa-video');
+    } else {
+        video = 'false';
+        $('#showVideo').css("background", "#f13f3a");
+        $('#showVideo i').attr('class', 'fa fa-video-slash');
+    }
+}
+
