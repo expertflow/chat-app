@@ -1,8 +1,8 @@
-const params = new URLSearchParams(window.location.search);
+// const params = new URLSearchParams(window.location.search);
 
-widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
-service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
-channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
+// widget_identifier = decodeURIComponent(params.get('widgetIdentifier'));
+// service_identifier = decodeURIComponent(params.get('serviceIdentifier'));
+// channel_customer_identifier = decodeURIComponent(params.get('channelCustomerIdentifier'));
 var messages = [];
 let source = '';
 let conversationId;
@@ -39,6 +39,7 @@ function setWidgetConfigs(data) {
     let subTitle = document.getElementById('subTitle'); //let's chat
     let theme = document.documentElement; //Theme Color
     let enableFileTransfer = document.getElementById('file-btn');  //false
+
     title.innerHTML = data.title;
     subTitle.innerHTML = data.subTitle;
     theme.style.setProperty('--themeColor', data.theme);
@@ -182,22 +183,21 @@ function setUserData(data, queryType) {
             }
         }
     } else {
-
-        if(queryType == 'audioCall' && isWebRtcEnabled){
-console.log(queryType, 'its an audio') ;
+        if (queryType == 'audioCall' && isWebRtcEnabled) {
+            console.log(queryType, 'its an audio');
             diallcall('audio');
             displayAudio();
             return false;
 
-        }else if(queryType == 'videoCall' && isWebRtcEnabled){
-            console.log(queryType, 'its an video') ;
+        } else if (queryType == 'videoCall' && isWebRtcEnabled) {
+            console.log(queryType, 'its an video');
 
             videoCallStart();
-        }else if(queryType == 'startChat'){
+        } else if (queryType == 'startChat') {
             let user = {data: customerData};
             localStorage.setItem('user', JSON.stringify(user));
             if (localStorage.getItem('user')) {
-                establish_connection(service_identifier, channel_customer_identifier, (res) => {
+                establishConnection(service_identifier, channel_customer_identifier, (res) => {
                     try {
                         if (res.id !== undefined || res.id !== '' || res.id !== null) {
                             switch (res.type) {
@@ -254,10 +254,10 @@ console.log(queryType, 'its an audio') ;
                     }
                     console.log('Callback Function Response: ', res);
                 });
+            } else {
+                console.log('something went wrong with the query type');
+                return false;
             }
-        } else{
-            console.log('something went wrong with the query type');
-            return false;
         }
     }
 }
@@ -572,7 +572,6 @@ function displayMessage() {
     })
     const chatMessage = document.getElementById('chatbox__messages');
     chatMessage.innerHTML = msg;
-    // console.log('msg:', msg);
     scrollToBottom();
 }
 
