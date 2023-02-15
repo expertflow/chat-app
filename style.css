@@ -70,6 +70,7 @@ label {
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
 }
+
 .form-control:focus {
     border-color: inherit;
     box-shadow: 0 0 0 0.2rem rgba(254, 255, 255, 0.25);
@@ -193,20 +194,15 @@ label {
     text-decoration: none;
 }
 
+.form-btn {
+    margin-top: 35px;
+}
+
 /* FOOTER */
 .chatbox__footer {
     position: sticky;
     bottom: 0;
 }
-
-/*.chatbox__support {*/
-/*    background: #f9f9f9;*/
-/*    height: 450px;*/
-/*    width: 350px;*/
-/*    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);*/
-/*    border-top-left-radius: 20px;*/
-/*    border-top-right-radius: 20px;*/
-/*}*/
 
 /* HEADER */
 .chatbox__header {
@@ -240,9 +236,11 @@ label {
 .chatbox__description--header {
     font-size: .7rem;
 }
+
 .chatbox__header--button {
     margin: 0px 10px;
 }
+
 /* Messages */
 .chatbox__messages {
     padding: 0 10px;
@@ -384,7 +382,7 @@ label {
 
 
 /*web rtc*/
-#video_chat_display{
+#video_chat_display {
     display: none;
 }
 
@@ -400,6 +398,7 @@ label {
     display: block;
     border-top: 2px solid rgb(52, 99, 173);
 }
+
 /*.circle:before {*/
 /*    content: '\f095';*/
 /*    font-family: 'FontAwesome';*/
@@ -413,18 +412,18 @@ label {
 }
 
 #chat_converse {
-     display: none;
+    display: none;
     padding: 10px;
     text-align: center;
 }
 
-#chat_converse .wrapper{
+#chat_converse .wrapper {
     position: relative;
     margin: 10px auto;
 }
 
 .call-initiating {
-     display: none;
+    display: none;
     position: absolute;
     top: 70px;
     left: 0;
@@ -432,23 +431,28 @@ label {
     background: #fff;
     width: 100%;
 }
-.call-status-area{
+
+.call-status-area {
     text-align: center;
     padding: 20px 10px;
 }
+
 .call_control {
     position: absolute;
     bottom: 22px;
     width: 100%;
     text-align: center;
 }
+
 ul.control-list {
- margin: 0 auto;
+    margin: 0 auto;
 }
+
 ul.control-list li:hover {
     opacity: 1;
     transition: all .3s;
 }
+
 ul.control-list li {
     display: inline-block;
     width: 50px;
@@ -463,25 +467,31 @@ ul.control-list li {
     opacity: .8;
     transition: all .3s;
 }
-li.end-call{
+
+li.end-call {
     background: #f13f3a !important;
 }
-#showVideo{
+
+#showVideo {
     display: none;
 }
-#muteAudio .fa-microphone-slash, #showVideo .fa-video-slash{
+
+#muteAudio .fa-microphone-slash,
+#showVideo .fa-video-slash {
     color: #fff;
 }
+
 ul.control-list li.end-call .fa {
     transform: rotate(135deg);
     color: #fff;
 
 }
+
 ul.control-list li .fa {
     color: #8e8989;
 }
 
-.local-video{
+.local-video {
     width: 100%;
 }
 
